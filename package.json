@@ -1,0 +1,38 @@
+{
+  "name": "js13k-3d-game-engine",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "serve": "vite preview",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "lint": "eslint --ext .ts,.js,.vue --ignore-path .gitignore --fix src"
+  },
+  "dependencies": {
+    "@mdi/font": "5.9.55",
+    "@vue/eslint-config-airbnb": "^6.0.0",
+    "@vue/eslint-config-typescript": "^11.0.0",
+    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-plugin-html": "^6.2.0",
+    "eslint-plugin-vue": "^9.1.1",
+    "roboto-fontface": "*",
+    "sass": "^1.53.0",
+    "sass-loader": "^13.0.0",
+    "vue": "^3.2.25",
+    "vuetify": "^3.0.0-beta.0",
+    "webfontloader": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/webfontloader": "^1.0.0",
+    "@vitejs/plugin-vue": "^2.3.3",
+    "eslint": "^8.18.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "eslint-plugin-vuejs-accessibility": "^1.2.0",
+    "typescript": "^4.5.4",
+    "vite": "^2.9.9",
+    "vite-plugin-vuetify": "^1.0.0-alpha.0",
+    "vue-cli-plugin-vuetify": "~2.5.1",
+    "vue-tsc": "^0.34.7"
+  }
+}
