@@ -4,16 +4,44 @@
       <v-col cols="10">
         <div class="grid" ref="grid">
           <div>
-            <canvas id="camera" ref="cameraCanvas" @keydown="onCameraKeyDown" @keyup="onCameraKeyUp" oncontextmenu="return false;"></canvas>
+            <canvas
+              ref="cameraCanvas"
+              @mousemove="onCameraMouseMove"
+              oncontextmenu="return false;"
+            ></canvas>
           </div>
           <div>
-            <canvas id="top" ref="topCanvas" @mousedown="onMouseDown" @mouseup="onMouseUp" oncontextmenu="return false;"></canvas>
+            <div class="canvas-label">Top (x/z)</div>
+            <canvas
+              ref="topCanvas"
+              @mousedown="onMouseDown"
+              @mouseup="onMouseUp"
+              oncontextmenu="return false;"
+              data-horizontal-dimension="x"
+              data-vertical-dimension="z"
+            ></canvas>
           </div>
           <div>
-            <canvas id="front" ref="frontCanvas" oncontextmenu="return false;"></canvas>
+            <div class="canvas-label">Front (x/y)</div>
+            <canvas
+              ref="frontCanvas"
+              @mousedown="onMouseDown"
+              @mouseup="onMouseUp"
+              oncontextmenu="return false;"
+              data-horizontal-dimension="x"
+              data-vertical-dimension="y"
+            ></canvas>
           </div>
           <div>
-            <canvas id="side" ref="sideCanvas" oncontextmenu="return false;"></canvas>
+            <div class="canvas-label">Side (z/y)</div>
+            <canvas
+              ref="sideCanvas"
+              @mousedown="onMouseDown"
+              @mouseup="onMouseUp"
+              oncontextmenu="return false;"
+              data-horizontal-dimension="z"
+              data-vertical-dimension="y"
+            ></canvas>
           </div>
         </div>
       </v-col>
@@ -49,9 +77,8 @@ const sideCanvas = ref<HTMLCanvasElement>(null);
 const scene = new Scene();
 
 const camera = new Camera(Math.PI / 5, renderCanvas.width / renderCanvas.height, 1, 400);
-camera.position = new EnhancedDOMPoint(0, 0, 17);
+camera.position = new EnhancedDOMPoint(0, 0, 10);
 
-// const topCamera = new Camera(Math.PI / 5, renderCanvas.width / renderCanvas.height, 1, 400);
 const topCamera = new OrthoCamera(-10, 10, -10, 10, 1, 400);
 topCamera.position = new EnhancedDOMPoint(0, 17, 0.001);
 
@@ -63,14 +90,44 @@ sideCamera.position = new EnhancedDOMPoint(17, 0, 0.001);
 
 const MoldableCube = MakeMoldable(CubeGeometry);
 
-const wallGeometry = new MoldableCube(8, 1, 1, 8, 1, 1)
-  .selectVertices(...[4, 5, 6, 7, 8, 17, 26, 35, 44, 53, 70, 79])
-  .rotate(0, 0, 0.6)
-  .selectVertices(...[9, 18, 27, 36, 45, 54, 69, 78])
-  .rotate(0, 0, 0.4)
-  .selectVertices(...[10, 19, 28, 37, 46, 55, 68, 77])
-  .rotate(0, 0, 0.2)
-  .done();
+function createCorner() {
+  const wallGeometry2 = new MoldableCube(4, 2, 1, 4, 1, 1)
+      .all()
+      .translate(0, 0, -2.5);
+
+  return new MoldableCube(6, 2, 1, 6, 1, 1)
+      .all()
+      .rotate(0, Math.PI / 2)
+      .translate(-2.5)
+      .merge(wallGeometry2)
+      .done();
+}
+
+function createBox() {
+  const secondCorner = createCorner().all().rotate(0, Math.PI, 0).done();
+  return createCorner().merge(secondCorner);
+}
+
+const wallGeometry = createBox()
+    // .selectBy(vertex => Math.abs(vertex.x) < 2.5 && Math.abs(vertex.z) < 2.5)
+    // .cylindrify(3, 'y')
+    // .invertSelection()
+    // .cylindrify(3.5, 'y')
+    // .selectBy(vertex => vertex.y > 0)
+    // .scale(0, 2, 0)
+    .done();
+
+// arch
+// const wallGeometry = new MoldableCube(8, 1, 1, 8, 1, 1)
+//   .selectVertices(...[2, 3, 6, 7, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 53, 54, 55, 56, 57, 58, 59, 60, 61, 71, 72, 73, 74, 75, 76, 77, 78, 79])
+//   .cylindrify(3, 'z', {x: 0, y: -3, z: 0})
+//     .computeNormalsCrossPlane()
+//     .all()
+//     .deselectVertices(...[2, 3, 6, 7, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 53, 54, 55, 56, 57, 58, 59, 60, 61, 71, 72, 73, 74, 75, 76, 77, 78, 79])
+//     .cylindrify(3, 'z', {x: 0, y: -3, z: 0})
+//     .translate(0, -1)
+//     .computeNormalsCrossPlane()
+//   .done();
 
 const wall = new Mesh(
     wallGeometry,
@@ -100,24 +157,31 @@ onMounted(() => {
 
   scene.add(wall);
 
+  const cameraContext = cameraCanvas.value.getContext('2d')!;
+  const topContext = topCanvas.value.getContext('2d')!;
+  const frontContext = frontCanvas.value.getContext('2d')!;
+  const sideContext = sideCanvas.value.getContext('2d')!;
+
   render();
   function render() {
     scene.updateWorldMatrix();
     camera.updateWorldMatrix();
+
     renderer.render(camera, scene);
-    cameraCanvas.value.getContext('2d').drawImage(renderCanvas, 0, 0);
+    cameraContext.clearRect(0, 0, cameraCanvas.value.width, cameraCanvas.value.height);
+    cameraContext.drawImage(renderCanvas, 0, 0);
 
     topCamera.updateWorldMatrix();
     renderer.render(topCamera, scene, true);
-    topCanvas.value.getContext('2d').drawImage(renderCanvas, 0, 0);
+    topContext.drawImage(renderCanvas, 0, 0);
 
     frontCamera.updateWorldMatrix();
     renderer.render(frontCamera, scene, true);
-    frontCanvas.value.getContext('2d').drawImage(renderCanvas, 0, 0);
+    frontContext.drawImage(renderCanvas, 0, 0);
 
     sideCamera.updateWorldMatrix();
     renderer.render(sideCamera, scene, true);
-    sideCanvas.value.getContext('2d').drawImage(renderCanvas, 0, 0);
+    sideContext.drawImage(renderCanvas, 0, 0);
 
     requestAnimationFrame(render);
   }
@@ -125,41 +189,50 @@ onMounted(() => {
 });
 
 const downPosition = new EnhancedDOMPoint();
-const downPositionDisplay = ref({x: 0, z: 0});
+const downPositionDisplay = ref({x: 0, y: 0, z: 0});
 const upPosition = new EnhancedDOMPoint();
 
 let isMouseDown = false;
 
-function onMouseDown(event: MouseEvent) {
-  downPosition.x = event.offsetX - event.target.clientWidth / 2;
-  downPosition.z = event.offsetY - event.target.clientHeight / 2;
 
-  downPosition.x *= 20 / event.target.clientWidth;
-  downPosition.z *= 20 / event.target.clientHeight;
-  downPositionDisplay.value.x = downPosition.x;
-  downPositionDisplay.value.z = downPosition.z;
+function onMouseDown(event: MouseEvent) {
+  const { horizontalDimension, verticalDimension } = event.target.dataset;
+  downPosition[horizontalDimension] = event.offsetX - event.target.clientWidth / 2;
+  downPosition[verticalDimension] = event.offsetY - event.target.clientHeight / 2;
+
+  downPosition[horizontalDimension] *= 20 / event.target.clientWidth;
+  downPosition[verticalDimension] *= 20 / event.target.clientHeight;
+
+  if (verticalDimension === 'y') {
+    downPosition[verticalDimension] *= -1;
+  }
+
+  downPositionDisplay.value[horizontalDimension] = downPosition[horizontalDimension];
+  downPositionDisplay.value[verticalDimension] = downPosition[verticalDimension];
   isMouseDown = true;
 }
 
 function onMouseUp(event: MouseEvent) {
-  if (isMouseDown) {
-    upPosition.x = event.offsetX - event.target.clientWidth / 2;
-    upPosition.z = event.offsetY - event.target.clientHeight / 2;
+  const { horizontalDimension, verticalDimension } = event.target.dataset;
 
-    upPosition.x *= 20 / event.target.clientWidth;
-    upPosition.z *= 20 / event.target.clientHeight;
+  if (isMouseDown) {
+    upPosition[horizontalDimension] = event.offsetX - event.target.clientWidth / 2;
+    upPosition[verticalDimension] = event.offsetY - event.target.clientHeight / 2;
+
+    upPosition[horizontalDimension] *= 20 / event.target.clientWidth;
+    upPosition[verticalDimension] *= 20 / event.target.clientHeight;
   }
 
-  const smallestX = Math.min(upPosition.x, downPosition.x);
-  const largestX = Math.max(upPosition.x, downPosition.x);
+  const smallestX = Math.min(upPosition[horizontalDimension], downPosition[horizontalDimension]);
+  const largestX = Math.max(upPosition[horizontalDimension], downPosition[horizontalDimension]);
 
-  const smallestZ = Math.min(upPosition.z, downPosition.z);
-  const largestZ = Math.max(upPosition.z, downPosition.z);
+  const smallestZ = Math.min(upPosition[verticalDimension], downPosition[verticalDimension]);
+  const largestZ = Math.max(upPosition[verticalDimension], downPosition[verticalDimension]);
 
   const verticesInSelection = [];
   wallGeometry.vertices.forEach((vertex, index) => {
-    if (vertex.x >= smallestX && vertex.x <= largestX
-      && vertex.z >= smallestZ && vertex.z <= largestZ) {
+    if (vertex[horizontalDimension] >= smallestX && vertex[horizontalDimension] <= largestX
+      && vertex[verticalDimension] >= smallestZ && vertex[verticalDimension] <= largestZ) {
       verticesInSelection.push(index);
     }
   });
@@ -167,6 +240,20 @@ function onMouseUp(event: MouseEvent) {
   console.log(verticesInSelection);
 
   isMouseDown = false;
+}
+
+const cameraRotation = new EnhancedDOMPoint(0, 0, 0);
+function onCameraMouseMove(event: MouseEvent) {
+  if (event.buttons === 1) {
+    const rotationSpeed = 0.01;
+    cameraRotation.y += event.movementX * -rotationSpeed;
+    cameraRotation.x += event.movementY * -rotationSpeed;
+    camera.setRotation(cameraRotation.x, cameraRotation.y, 0);
+  } else if (event.buttons === 4) {
+    const movementSpeed = 0.1;
+    camera.position.x += event.movementX * movementSpeed;
+    camera.position.y += event.movementY * -movementSpeed;
+  }
 }
 
 </script>
@@ -185,5 +272,12 @@ function onMouseUp(event: MouseEvent) {
     grid-row: auto;
     grid-column-gap: 10px;
     grid-row-gap: 10px;
+  }
+
+  .canvas-label {
+    position: absolute;
+    pading-top: 5px;
+    padding-left: 5px;
+    font-size: 14px;
   }
 </style>

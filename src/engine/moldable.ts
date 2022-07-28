@@ -1,4 +1,4 @@
-import { EnhancedDOMPoint } from '@/engine/enhanced-dom-point';
+import { EnhancedDOMPoint, VectorLike } from '@/engine/enhanced-dom-point';
 import { calculateVertexNormals, radsToDegrees } from '@/engine/math-helpers';
 import { CubeGeometry } from '@/engine/cube-geometry';
 import { AttributeLocation } from '@/engine/renderer/renderer';
@@ -29,6 +29,16 @@ export function MakeMoldable<TBase extends CanBeMoldable>(Base: TBase) {
 
     selectVertices(...vertices: number[]) {
       this.verticesToActOn = vertices.map(vertexNumber => this.vertices[vertexNumber]);
+      return this;
+    }
+
+    invertSelection() {
+      this.verticesToActOn = this.vertices.filter(vertex => !this.verticesToActOn.includes(vertex));
+      return this;
+    }
+
+    selectBy(callback: (vertex: EnhancedDOMPoint, index: number, array: EnhancedDOMPoint[]) => EnhancedDOMPoint) {
+      this.verticesToActOn = this.vertices.filter(callback);
       return this;
     }
 
@@ -78,13 +88,33 @@ export function MakeMoldable<TBase extends CanBeMoldable>(Base: TBase) {
       return this;
     }
 
-    cylindrify(radius: number, aroundAxis: 'x' | 'y' | 'z' = 'y') {
+    cylindrify(radius: number, aroundAxis: 'x' | 'y' | 'z' = 'y', circleCenter: VectorLike = {x: 0, y: 0, z: 0}) {
       this.verticesToActOn.forEach(vertex => {
         const originalAxis = vertex[aroundAxis];
         vertex[aroundAxis] = 0;
-        vertex.normalize().scale(radius);
+        vertex.subtract(circleCenter).normalize().scale(radius);
+        // vertex.normalize().scale(radius);
         vertex[aroundAxis] = originalAxis;
       });
+      return this;
+    }
+
+    merge(otherMoldable: Moldable) {
+      const updatedOtherIndices = otherMoldable.getIndices()!.map(index => index + this.vertices.length);
+      this.setIndices(new Uint16Array([...this.getIndices()!, ...updatedOtherIndices]));
+
+      this.vertices.push(...otherMoldable.vertices);
+
+      const thisTextureCoords = this.getAttribute(AttributeLocation.TextureCoords).data;
+      const otherTextureCoords = otherMoldable.getAttribute(AttributeLocation.TextureCoords).data;
+      const combinedCoords = new Float32Array([...thisTextureCoords, ...otherTextureCoords]);
+      this.setAttribute(AttributeLocation.TextureCoords, combinedCoords, 2);
+
+      const thisNormals = this.getAttribute(AttributeLocation.Normals).data;
+      const otherNormals = otherMoldable.getAttribute(AttributeLocation.Normals).data;
+      const combinedNormals = new Float32Array([...thisNormals, ...otherNormals]);
+      this.setAttribute(AttributeLocation.Normals, combinedNormals, 3);
+
       return this;
     }
 
