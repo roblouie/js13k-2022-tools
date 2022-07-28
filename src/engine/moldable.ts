@@ -14,6 +14,7 @@ export function MakeMoldable<TBase extends CanBeMoldable>(Base: TBase) {
 
     constructor(...args: any[]) {
       super(...args);
+      this.all();
     }
 
     all() {

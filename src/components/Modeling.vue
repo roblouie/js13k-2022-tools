@@ -90,7 +90,22 @@ sideCamera.position = new EnhancedDOMPoint(17, 0, 0.001);
 
 const MoldableCube = MakeMoldable(CubeGeometry);
 
-function createCorner() {
+function createCorner(width: number, height: number, depth: number, widthSegments: number, heightSegments: number, depthSegments: number) {
+  const wallGeometry2 = new MoldableCube(width - 2, height, depth, widthSegments - 2, heightSegments, depthSegments)
+      .all()
+      .translate(0, 0, width / 2 - 0.5);
+
+  return new MoldableCube(width, height, depth, widthSegments, heightSegments, depthSegments)
+      .all()
+      .rotate(0, Math.PI / 2)
+      .translate(width / 2 - 0.5)
+      .merge(wallGeometry2)
+      .computeNormalsPerPlane()
+      .done();
+}
+
+
+function createCorner2() {
   const wallGeometry2 = new MoldableCube(4, 2, 1, 4, 1, 1)
       .all()
       .translate(0, 0, -2.5);
@@ -102,20 +117,52 @@ function createCorner() {
       .merge(wallGeometry2)
       .done();
 }
+function createBox3() {
+  const secondCorner = createCorner(6, 2, 1, 6, 1, 1).all().rotate(0, Math.PI, 0).done();
+  return secondCorner//  createCorner(4, 2, 1, 6, 1, 1).merge(secondCorner).computeNormalsPerPlane();
+}
 
-function createBox() {
+
+function createBox2() {
   const secondCorner = createCorner().all().rotate(0, Math.PI, 0).done();
   return createCorner().merge(secondCorner);
 }
 
-const wallGeometry = createBox()
-    // .selectBy(vertex => Math.abs(vertex.x) < 2.5 && Math.abs(vertex.z) < 2.5)
-    // .cylindrify(3, 'y')
-    // .invertSelection()
-    // .cylindrify(3.5, 'y')
-    // .selectBy(vertex => vertex.y > 0)
-    // .scale(0, 2, 0)
-    .done();
+
+function createHallway(width: number, height: number, depth: number, widthSegments: number, heightSegments: number, depthSegments: number, spacing: number) {
+  const isHorizontal = width >= depth;
+  const wallGeometry2 = new MoldableCube(width, height, depth, widthSegments, heightSegments, depthSegments)
+      .translate(isHorizontal ? 0 : spacing, 0, isHorizontal ? spacing : 0);
+
+  return new MoldableCube(width, height, depth, widthSegments, heightSegments, depthSegments)
+      .translate(isHorizontal ? 0 : -spacing, 0, isHorizontal ? -spacing : 0)
+      .merge(wallGeometry2)
+      .computeNormalsPerPlane()
+      .done();
+}
+
+function createBox(width: number, height: number, depth: number, widthSegments: number, heightSegments: number, depthSegments: number) {
+  const spacing = (width - depth) / 2;
+  const sideWidth = width - depth * 2;
+  const segmentWidth = width / widthSegments;
+  const widthInSegments = width / segmentWidth;
+  const sideSpacing = (segmentWidth / 2) * (widthInSegments - 1);
+  const verticalWalls = createHallway(sideWidth, height, segmentWidth, Math.ceil(widthSegments * (sideWidth / width)), heightSegments, depthSegments, sideSpacing).all().rotate(0, Math.PI / 2, 0).done();
+  return createHallway(width, height, depth, widthSegments, heightSegments, depthSegments, spacing).merge(verticalWalls).computeNormalsPerPlane();
+}
+
+function createTube() {
+  return createBox(6, 2, 1, 6, 1, 1)
+      .selectBy(vertex => Math.abs(vertex.x) < 2.5 && Math.abs(vertex.z) < 2.5)
+      .cylindrify(2, 'y')
+      // .cylindrify(3.5, 'y')
+      // .selectBy(vertex => vertex.y > 0)
+      // .scale(0, 2, 0)
+      .done();
+}
+
+const wallGeometry = createTube();
+
 
 // arch
 // const wallGeometry = new MoldableCube(8, 1, 1, 8, 1, 1)
