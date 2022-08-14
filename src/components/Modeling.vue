@@ -155,7 +155,9 @@ function createTube() {
   return createBox(6, 2, 1, 6, 1, 1)
       .selectBy(vertex => Math.abs(vertex.x) < 2.5 && Math.abs(vertex.z) < 2.5)
       .cylindrify(2, 'y')
-      // .cylindrify(3.5, 'y')
+      .invertSelection()
+      .cylindrify(3.5, 'y')
+      .computeNormalsCrossPlane()
       // .selectBy(vertex => vertex.y > 0)
       // .scale(0, 2, 0)
       .done();
