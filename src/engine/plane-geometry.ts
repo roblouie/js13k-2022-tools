@@ -74,11 +74,11 @@ export function buildPlane(
 
       normals.push(vector.x, vector.y, vector.z);
 
-      uvs.push(ix);
-      uvs.push(1 - (iy));
+      // uvs.push(ix);
+      // uvs.push(1 - (iy));
       // To make the texture spread across the whole plane regardless of subdivisions we can do this instead:
-      // uvs.push(ix / gridX);
-      // uvs.push(1 - (iy / gridY));
+      uvs.push(ix / gridX);
+      uvs.push(1 - (iy / gridY));
       // Currently I don't want this behavior but might in the future. Might be better to have it spread across
       // the whole mesh and handle texture repeat via the material repeat property.
       heightmapPosition++;

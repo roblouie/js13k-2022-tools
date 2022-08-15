@@ -67,6 +67,7 @@ import { gl, lilgl, renderCanvas } from '@/engine/renderer/lil-gl';
 import { OrthoCamera } from '@/engine/renderer/ortho-camera';
 import { PlaneGeometry } from '@/engine/plane-geometry';
 import { MakeMoldable } from '@/engine/moldable';
+import { Object3d } from '@/engine/renderer/object-3d';
 
 const grid = ref<HTMLDivElement>(null);
 const cameraCanvas = ref<HTMLCanvasElement>(null);
@@ -151,21 +152,82 @@ function createBox(width: number, height: number, depth: number, widthSegments: 
   return createHallway(width, height, depth, widthSegments, heightSegments, depthSegments, spacing).merge(verticalWalls).computeNormalsPerPlane();
 }
 
-function createTube() {
+function createTire() {
   return createBox(6, 2, 1, 6, 1, 1)
       .selectBy(vertex => Math.abs(vertex.x) < 2.5 && Math.abs(vertex.z) < 2.5)
-      .cylindrify(2, 'y')
+      .cylindrify(1.5, 'y')
       .invertSelection()
       .cylindrify(3.5, 'y')
+      .all()
       .computeNormalsCrossPlane()
-      // .selectBy(vertex => vertex.y > 0)
-      // .scale(0, 2, 0)
       .done();
 }
 
-const wallGeometry = createTube();
+function createWheel() {
+  return new MoldableCube(2, 2, 2, 4, 1, 4)
+    .selectBy(vertex => Math.abs(vertex.x) > 0.4 && Math.abs(vertex.z) > 0.4)
+    .cylindrify(1.5)
+      .invertSelection()
+      .scale(1, 0.5, 1)
+      .computeNormalsPerPlane()
+    .done();
+}
 
+function createWheelAndTire() {
+  const wheelGeometry = createWheel();
+  const wheel = new Mesh(
+      wheelGeometry,
+      materials.wheel,
+  );
 
+  const tireGeometry = createTire();
+  const tire = new Mesh(
+      tireGeometry,
+      materials.tire,
+  );
+
+  const wheelAndTire = new Object3d(wheel, tire);
+  wheelAndTire.scale.set(0.5, 1.5, 0.5);
+  return wheelAndTire;
+}
+
+function createWheelPair() {
+  const leftWheel = createWheelAndTire();
+  leftWheel.rotate(0, 0, Math.PI / 2);
+  leftWheel.position.x -= 4;
+
+  const rightWheel = createWheelAndTire();
+  rightWheel.rotate(0, 0, Math.PI / 2);
+  rightWheel.position.x += 4;
+
+  return new Object3d(leftWheel, rightWheel);
+}
+
+function createChassis() {
+  const chassisGeometry = new MoldableCube(8, 3, 12, 3, 3, 6)
+  .selectBy(vertex => vertex.y > 1 && Math.abs(vertex.z) < 3)
+  .translate(0, 2, 2)
+  .selectBy(vertex => vertex.z > 4)
+  .translate(0, 0, 4)
+      .selectBy(vertex => vertex.z < -4)
+      .translate(0, 0, -1)
+      .scale(0.8, 0.8, 1)
+  .done();
+
+  const chassis = new Mesh(
+      chassisGeometry,
+      materials.chassis,
+  );
+  chassis.position.y += 2;
+  chassis.position.z -= 1.5;
+  chassis.scale.z = 0.9;
+  return chassis;
+}
+
+const frontWheels = createWheelPair();
+const rearWheels = createWheelPair();
+frontWheels.position.z += 4;
+rearWheels.position.z -= 4;
 // arch
 // const wallGeometry = new MoldableCube(8, 1, 1, 8, 1, 1)
 //   .selectVertices(...[2, 3, 6, 7, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 53, 54, 55, 56, 57, 58, 59, 60, 61, 71, 72, 73, 74, 75, 76, 77, 78, 79])
@@ -178,10 +240,11 @@ const wallGeometry = createTube();
 //     .computeNormalsCrossPlane()
 //   .done();
 
-const wall = new Mesh(
-    wallGeometry,
-    materials.bricks,
-);
+const car = new Object3d(frontWheels, rearWheels, createChassis());
+
+
+const object3d = new Object3d();
+object3d.add(car);
 
 onMounted(() => {
   renderCanvas.width = cameraCanvas.value.parentElement.clientWidth;
@@ -199,12 +262,12 @@ onMounted(() => {
 
   // scene.skybox = new BufferGeometry();
 
-  camera.lookAt(wall.position);
-  topCamera.lookAt(wall.position);
-  frontCamera.lookAt(wall.position);
-  sideCamera.lookAt(wall.position);
+  camera.lookAt(object3d.position);
+  topCamera.lookAt(object3d.position);
+  frontCamera.lookAt(object3d.position);
+  sideCamera.lookAt(object3d.position);
 
-  scene.add(wall);
+  scene.add(object3d);
 
   const cameraContext = cameraCanvas.value.getContext('2d')!;
   const topContext = topCanvas.value.getContext('2d')!;

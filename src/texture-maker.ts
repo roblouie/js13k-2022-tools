@@ -8,6 +8,9 @@ const [drawContext, tileContext, noiseContext] = ['draw', 'tile', 'noise'].map(i
   canvas.id = id;
   canvas.width = id === 'tile' ? 256 : 128;
   canvas.height = id === 'tile' ? 256 : 128;
+  setTimeout(() => {
+    document.querySelector('div').appendChild(canvas);
+  }, 300);
   return canvas.getContext('2d')!;
 });
 
@@ -111,6 +114,46 @@ export function drawTiles() {
 }
 const tiles = new Material({texture: textureLoader.load(drawTiles())});
 
+
+function drawTurf() {
+  clearWith('#0cf105');
+  noisify(drawContext, 30);
+  noiseMaker.seed(23);
+  noiseContext.putImageData(noiseMaker.noiseImage(128, 1 / 16, 4, NoiseType.Blobs, '#00f', 40, false, 'x', 'y', 'z', 0), 0, 0);
+  drawContext.drawImage(noiseContext.canvas, 0, 0, resolution, resolution);
+  tileDrawn();
+  return mainImageData();
+}
+const turfTexture = textureLoader.load(drawTurf());
+turfTexture.repeat.x = 20;
+turfTexture.repeat.y = 20;
+const turf = new Material({texture: turfTexture});
+
+
+
+const tire = new Material({ color: '#000'});
+const wheel = new Material({ color: '#888'});
+
+
+// *********************
+// Chassis
+// *********************
+function drawChassis() {
+  clearWith('#bbb');
+  drawContext.fillStyle = '#aaa';
+  drawContext.strokeStyle = '#999';
+  tile((x, y) => {
+    drawContext.filter = 'drop-shadow(1px 1px 2px #9996)';
+    drawContext.rect(x + 6, y + 6, 116, 54);
+    drawContext.stroke();
+    drawContext.fill();
+  }, resolution, resolution / 2);
+  noisify(drawContext, 3);
+  return mainImageData();
+}
+const chassis = new Material({texture: textureLoader.load(drawChassis())});
+
+
 textureLoader.bindTextures();
 
 export const materials = {
@@ -121,6 +164,10 @@ export const materials = {
   treeLeaves,
   wood,
   tiles,
+  turf,
+  tire,
+  wheel,
+  chassis,
 };
 
 // export const skyboxes = {

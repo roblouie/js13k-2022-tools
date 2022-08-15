@@ -67,7 +67,7 @@ export class Renderer {
 
     const renderMesh = (mesh: Mesh) => {
       gl.useProgram(lilgl.program);
-      const modelViewProjectionMatrix = viewProjectionMatrix.multiply(mesh.worldMatrix)
+      const modelViewProjectionMatrix = viewProjectionMatrix.multiply(mesh.worldMatrix);
       gl.uniform4fv(this.colorLocation, mesh.material.color);
       gl.vertexAttrib1f(AttributeLocation.TextureDepth, mesh.material.texture?.id ?? -1.0);
       const textureRepeat = [mesh.material.texture?.repeat.x ?? 1, mesh.material.texture?.repeat.y ?? 1];
