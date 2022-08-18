@@ -149,7 +149,7 @@ function createBox(width: number, height: number, depth: number, widthSegments: 
   const widthInSegments = width / segmentWidth;
   const sideSpacing = (segmentWidth / 2) * (widthInSegments - 1);
   const verticalWalls = createHallway(sideWidth, height, segmentWidth, Math.ceil(widthSegments * (sideWidth / width)), heightSegments, depthSegments, sideSpacing).all().rotate(0, Math.PI / 2, 0).done();
-  return createHallway(width, height, depth, widthSegments, heightSegments, depthSegments, spacing).merge(verticalWalls).computeNormalsPerPlane();
+  return createHallway(width, height, depth, widthSegments, heightSegments, depthSegments, spacing).merge(verticalWalls).computeNormalsPerPlane().done();
 }
 
 function createTire() {
@@ -159,6 +159,7 @@ function createTire() {
       .invertSelection()
       .cylindrify(3.5, 'y')
       .all()
+      .rotate(0, 0, Math.PI / 2)
       .computeNormalsCrossPlane()
       .done();
 }
@@ -167,9 +168,11 @@ function createWheel() {
   return new MoldableCube(2, 2, 2, 4, 1, 4)
     .selectBy(vertex => Math.abs(vertex.x) > 0.4 && Math.abs(vertex.z) > 0.4)
     .cylindrify(1.5)
-      .invertSelection()
-      .scale(1, 0.5, 1)
-      .computeNormalsPerPlane()
+    .invertSelection()
+    .scale(1, 0.5, 1)
+    .all()
+    .rotate(0, 0, Math.PI / 2)
+    .computeNormalsPerPlane()
     .done();
 }
 
@@ -187,40 +190,45 @@ function createWheelAndTire() {
   );
 
   const wheelAndTire = new Object3d(wheel, tire);
-  wheelAndTire.scale.set(0.5, 1.5, 0.5);
+  wheelAndTire.scale.set(1.5, 0.5, 0.5);
   return wheelAndTire;
 }
 
 function createWheelPair() {
   const leftWheel = createWheelAndTire();
-  leftWheel.rotate(0, 0, Math.PI / 2);
+  // leftWheel.rotate(0, 0, Math.PI / 2);
   leftWheel.position.x -= 4;
 
   const rightWheel = createWheelAndTire();
-  rightWheel.rotate(0, 0, Math.PI / 2);
+  // rightWheel.rotate(0, 0, Math.PI / 2);
   rightWheel.position.x += 4;
 
   return new Object3d(leftWheel, rightWheel);
 }
 
 function createChassis() {
-  const chassisGeometry = new MoldableCube(8, 3, 12, 3, 3, 6)
-  .selectBy(vertex => vertex.y > 1 && Math.abs(vertex.z) < 3)
-  .translate(0, 2, 2)
-  .selectBy(vertex => vertex.z > 4)
-  .translate(0, 0, 4)
-      .selectBy(vertex => vertex.z < -4)
-      .translate(0, 0, -1)
-      .scale(0.8, 0.8, 1)
-  .done();
+  const cab = new MoldableCube(8, 3, 9, 3, 3, 4)
+      .selectBy(vertex => vertex.y > 1 && (vertex.z < 3 && vertex.z > -2))
+      .translate(0, 2, 2.3)
+
+  const bed = createBox(8, 3, 0.8, 6, 2, 1)
+      .rotate(0, Math.PI / 2)
+      .merge(new MoldableCube(8, 1.5, 8).translate(0, -0.8)) // floor of bed
+      .translate(0, 0, 7.5)
+      .done();
+
+  const chassisGeometry = cab.merge(bed)
+      .computeNormalsPerPlane()
+      .done();
 
   const chassis = new Mesh(
       chassisGeometry,
       materials.chassis,
   );
   chassis.position.y += 2;
-  chassis.position.z -= 1.5;
+  chassis.position.z += 3;
   chassis.scale.z = 0.9;
+  chassis.rotate(0, Math.PI, 0);
   return chassis;
 }
 
@@ -228,6 +236,15 @@ const frontWheels = createWheelPair();
 const rearWheels = createWheelPair();
 frontWheels.position.z += 4;
 rearWheels.position.z -= 4;
+
+const car = new Object3d(frontWheels, rearWheels, createChassis());
+
+
+
+const object3d = new Object3d();
+object3d.add(car);
+
+
 // arch
 // const wallGeometry = new MoldableCube(8, 1, 1, 8, 1, 1)
 //   .selectVertices(...[2, 3, 6, 7, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 53, 54, 55, 56, 57, 58, 59, 60, 61, 71, 72, 73, 74, 75, 76, 77, 78, 79])
@@ -239,12 +256,6 @@ rearWheels.position.z -= 4;
 //     .translate(0, -1)
 //     .computeNormalsCrossPlane()
 //   .done();
-
-const car = new Object3d(frontWheels, rearWheels, createChassis());
-
-
-const object3d = new Object3d();
-object3d.add(car);
 
 onMounted(() => {
   renderCanvas.width = cameraCanvas.value.parentElement.clientWidth;

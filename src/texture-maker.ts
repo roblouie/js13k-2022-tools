@@ -151,7 +151,7 @@ function drawChassis() {
   noisify(drawContext, 3);
   return mainImageData();
 }
-const chassis = new Material({texture: textureLoader.load(drawChassis())});
+const chassis = new Material({color: '#00f'});
 
 
 textureLoader.bindTextures();
