@@ -38,7 +38,7 @@ export function MakeMoldable<TBase extends CanBeMoldable>(Base: TBase) {
       return this;
     }
 
-    selectBy(callback: (vertex: EnhancedDOMPoint, index: number, array: EnhancedDOMPoint[]) => EnhancedDOMPoint) {
+    selectBy(callback: (vertex: EnhancedDOMPoint, index: number, array: EnhancedDOMPoint[]) => boolean) {
       this.verticesToActOn = this.vertices.filter(callback);
       return this;
     }
@@ -116,28 +116,6 @@ export function MakeMoldable<TBase extends CanBeMoldable>(Base: TBase) {
       const combinedNormals = new Float32Array([...thisNormals, ...otherNormals]);
       this.setAttribute(AttributeLocation.Normals, combinedNormals, 3);
 
-      return this;
-    }
-
-    delete() {
-      this.verticesToActOn.forEach(vertex => {
-        const vertexIndex = this.vertices.indexOf(vertex);
-        const indices = [...this.getIndices()!];
-        const normals = [...this.getAttribute(AttributeLocation.Normals).data];
-        normals.splice(vertexIndex, 1);
-        this.vertices.splice(vertexIndex, 1);
-
-        for (let i = 0; i < indices.length; i += 3) {
-          if ([indices[i], indices[i + 1], indices[i + 2]].includes(vertexIndex)) {
-            indices.splice(i, 3);
-          }
-        }
-
-        const renumberedIndices = indices.map(index => index > vertexIndex ? index - 1 : index);
-
-        this.setIndices(new Uint16Array(renumberedIndices));
-      });
-      this.verticesToActOn = [];
       return this;
     }
 

@@ -68,6 +68,10 @@ import { OrthoCamera } from '@/engine/renderer/ortho-camera';
 import { PlaneGeometry } from '@/engine/plane-geometry';
 import { MakeMoldable } from '@/engine/moldable';
 import { Object3d } from '@/engine/renderer/object-3d';
+import { createBox } from '@/modeling/building-blocks';
+import { truck } from '@/modeling/truck';
+import { doTimes } from '@/engine/helpers';
+import { noiseMaker } from '@/engine/texture-creation/noise-maker';
 
 const grid = ref<HTMLDivElement>(null);
 const cameraCanvas = ref<HTMLCanvasElement>(null);
@@ -83,7 +87,7 @@ camera.position = new EnhancedDOMPoint(0, 0, 10);
 const topCamera = new OrthoCamera(-10, 10, -10, 10, 1, 400);
 topCamera.position = new EnhancedDOMPoint(0, 17, 0.001);
 
-const frontCamera = new OrthoCamera(-10, 10, -10, 10, 1, 400);
+const frontCamera = new OrthoCamera(-20, 20, -20, 20, 1, 400);
 frontCamera.position = new EnhancedDOMPoint(0, 0, 17);
 
 const sideCamera = new OrthoCamera(-10, 10, -10, 10, 1, 400);
@@ -105,144 +109,55 @@ function createCorner(width: number, height: number, depth: number, widthSegment
       .done();
 }
 
-
-function createCorner2() {
-  const wallGeometry2 = new MoldableCube(4, 2, 1, 4, 1, 1)
-      .all()
-      .translate(0, 0, -2.5);
-
-  return new MoldableCube(6, 2, 1, 6, 1, 1)
-      .all()
-      .rotate(0, Math.PI / 2)
-      .translate(-2.5)
-      .merge(wallGeometry2)
-      .done();
-}
-function createBox3() {
-  const secondCorner = createCorner(6, 2, 1, 6, 1, 1).all().rotate(0, Math.PI, 0).done();
-  return secondCorner//  createCorner(4, 2, 1, 6, 1, 1).merge(secondCorner).computeNormalsPerPlane();
-}
-
-
-function createBox2() {
-  const secondCorner = createCorner().all().rotate(0, Math.PI, 0).done();
-  return createCorner().merge(secondCorner);
-}
-
-
-function createHallway(width: number, height: number, depth: number, widthSegments: number, heightSegments: number, depthSegments: number, spacing: number) {
-  const isHorizontal = width >= depth;
-  const wallGeometry2 = new MoldableCube(width, height, depth, widthSegments, heightSegments, depthSegments)
-      .translate(isHorizontal ? 0 : spacing, 0, isHorizontal ? spacing : 0);
-
-  return new MoldableCube(width, height, depth, widthSegments, heightSegments, depthSegments)
-      .translate(isHorizontal ? 0 : -spacing, 0, isHorizontal ? -spacing : 0)
-      .merge(wallGeometry2)
-      .computeNormalsPerPlane()
-      .done();
-}
-
-function createBox(width: number, height: number, depth: number, widthSegments: number, heightSegments: number, depthSegments: number) {
-  const spacing = (width - depth) / 2;
-  const sideWidth = width - depth * 2;
-  const segmentWidth = width / widthSegments;
-  const widthInSegments = width / segmentWidth;
-  const sideSpacing = (segmentWidth / 2) * (widthInSegments - 1);
-  const verticalWalls = createHallway(sideWidth, height, segmentWidth, Math.ceil(widthSegments * (sideWidth / width)), heightSegments, depthSegments, sideSpacing).all().rotate(0, Math.PI / 2, 0).done();
-  return createHallway(width, height, depth, widthSegments, heightSegments, depthSegments, spacing).merge(verticalWalls).computeNormalsPerPlane().done();
-}
-
-function createTire() {
-  return createBox(6, 2, 1, 6, 1, 1)
-      .selectBy(vertex => Math.abs(vertex.x) < 2.5 && Math.abs(vertex.z) < 2.5)
-      .cylindrify(1.5, 'y')
-      .invertSelection()
-      .cylindrify(3.5, 'y')
-      .all()
-      .rotate(0, 0, Math.PI / 2)
-      .computeNormalsCrossPlane()
-      .done();
-}
-
-function createWheel() {
-  return new MoldableCube(2, 2, 2, 4, 1, 4)
-    .selectBy(vertex => Math.abs(vertex.x) > 0.4 && Math.abs(vertex.z) > 0.4)
-    .cylindrify(1.5)
-    .invertSelection()
-    .scale(1, 0.5, 1)
-    .all()
-    .rotate(0, 0, Math.PI / 2)
-    .computeNormalsPerPlane()
+const smallTreeBase = new MoldableCube(2, 4, 2, 4, 2, 4)
+    .cylindrify(1)
+    .selectBy(vertex => vertex.y < 1.5 && vertex.y > -1.5)
+    .translate(0, 1)
+    .scale(0.8, 1, 0.8)
+    .selectBy(vertex => vertex.y > 1.5 && vertex.x > 0.3)
+    .scale(0.2, 1, 0.2)
+    .translate(4, 5)
+    .selectBy(vertex => vertex.y > 1.5 && vertex.x < -0.3)
+    .scale(0.2, 1, 0.2)
+    .translate(-3, 4, -2)
     .done();
+
+function makeTree(treeHeight: number, verticalSegments: number, radius: number) {
+  const segmentSize = treeHeight / verticalSegments;
+  const largeTreeBase = new MoldableCube(3, treeHeight, 3, 4, verticalSegments, 4)
+      .cylindrify(radius)
+      .translate(0, treeHeight / 2, 0);
+
+  let scale = 1.0;
+  doTimes(verticalSegments + 1, index => {
+    const yPos = index * segmentSize;
+    largeTreeBase.selectBy(vertex => vertex.y === yPos)
+        .scale(scale, 1, scale);
+    if (index % 2 === 0) {
+      scale *= 0.7;
+    } else {
+      largeTreeBase.translate(noiseMaker.randomNumber(index + treeHeight), 0, noiseMaker.randomNumber(index + treeHeight));
+    }
+
+    if (index === verticalSegments) {
+      largeTreeBase.scale(0, 1.2, 0);
+    }
+  });
+  return largeTreeBase.done();
 }
 
-function createWheelAndTire() {
-  const wheelGeometry = createWheel();
-  const wheel = new Mesh(
-      wheelGeometry,
-      materials.wheel,
-  );
+const treeBase = makeTree(16, 8, 2);
+const branch1 = makeTree(8, 4, 1);
+const branch2 = makeTree(6, 3, 0.7);
+branch1.all().rotate(0, 0, 1).translate(0, 5, -0.2).done();
+branch2.all().rotate(0.8, 0, -1).translate(0, 8, -0.2).done();
 
-  const tireGeometry = createTire();
-  const tire = new Mesh(
-      tireGeometry,
-      materials.tire,
-  );
-
-  const wheelAndTire = new Object3d(wheel, tire);
-  wheelAndTire.scale.set(1.5, 0.5, 0.5);
-  return wheelAndTire;
-}
-
-function createWheelPair() {
-  const leftWheel = createWheelAndTire();
-  // leftWheel.rotate(0, 0, Math.PI / 2);
-  leftWheel.position.x -= 4;
-
-  const rightWheel = createWheelAndTire();
-  // rightWheel.rotate(0, 0, Math.PI / 2);
-  rightWheel.position.x += 4;
-
-  return new Object3d(leftWheel, rightWheel);
-}
-
-function createChassis() {
-  const cab = new MoldableCube(8, 3, 9, 3, 3, 4)
-      .selectBy(vertex => vertex.y > 1 && (vertex.z < 3 && vertex.z > -2))
-      .translate(0, 2, 2.3)
-
-  const bed = createBox(8, 3, 0.8, 6, 2, 1)
-      .rotate(0, Math.PI / 2)
-      .merge(new MoldableCube(8, 1.5, 8).translate(0, -0.8)) // floor of bed
-      .translate(0, 0, 7.5)
-      .done();
-
-  const chassisGeometry = cab.merge(bed)
-      .computeNormalsPerPlane()
-      .done();
-
-  const chassis = new Mesh(
-      chassisGeometry,
-      materials.chassis,
-  );
-  chassis.position.y += 2;
-  chassis.position.z += 3;
-  chassis.scale.z = 0.9;
-  chassis.rotate(0, Math.PI, 0);
-  return chassis;
-}
-
-const frontWheels = createWheelPair();
-const rearWheels = createWheelPair();
-frontWheels.position.z += 4;
-rearWheels.position.z -= 4;
-
-const car = new Object3d(frontWheels, rearWheels, createChassis());
-
+treeBase.merge(branch1).merge(branch2).computeNormalsCrossPlane().done();
+const tree = new Mesh(treeBase, materials.wood);
 
 
 const object3d = new Object3d();
-object3d.add(car);
+object3d.add(tree);
 
 
 // arch
@@ -372,7 +287,7 @@ function onCameraMouseMove(event: MouseEvent) {
     cameraRotation.y += event.movementX * -rotationSpeed;
     cameraRotation.x += event.movementY * -rotationSpeed;
     camera.setRotation(cameraRotation.x, cameraRotation.y, 0);
-  } else if (event.buttons === 4) {
+  } else if (event.buttons === 2) {
     const movementSpeed = 0.1;
     camera.position.x += event.movementX * movementSpeed;
     camera.position.y += event.movementY * -movementSpeed;
