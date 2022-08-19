@@ -36,7 +36,7 @@ module.exports = {
     yoda: 'error',
     'no-unused-vars': 'off',
     'no-bitwise': 'off',
-    'no-plusplus': 'warn',
+    'no-plusplus': 'off',
     'class-methods-use-this': 'warn',
     'linebreak-style': 0,
     'no-param-reassign': 'warn',

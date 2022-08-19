@@ -72,6 +72,8 @@ import { createBox } from '@/modeling/building-blocks';
 import { truck } from '@/modeling/truck';
 import { doTimes } from '@/engine/helpers';
 import { noiseMaker } from '@/engine/texture-creation/noise-maker';
+import { largeLeaves, largeTree } from '@/modeling/trees';
+import { largeRock, mediumRock, smallRock } from '@/modeling/rocks';
 
 const grid = ref<HTMLDivElement>(null);
 const cameraCanvas = ref<HTMLCanvasElement>(null);
@@ -122,70 +124,23 @@ const smallTreeBase = new MoldableCube(2, 4, 2, 4, 2, 4)
     .translate(-3, 4, -2)
     .done();
 
-function makeTree(treeHeight: number, verticalSegments: number, radius: number) {
-  const segmentSize = treeHeight / verticalSegments;
-  const largeTreeBase = new MoldableCube(3, treeHeight, 3, 4, verticalSegments, 4)
-      .cylindrify(radius)
-      .translate(0, treeHeight / 2, 0);
+// const rockGeo = new MoldableCube(6, 3, 4, 2, 3, 2).spherify(3);
+// let scale = 4.0;
+// doTimes(20, index => {
+//   const yPos = index - 8;
+//   rockGeo
+//       .selectBy(vertex => vertex.y > yPos && vertex.y < yPos + 1)
+//       .scale(scale, 1.2, scale);
+//   scale *= 0.8;
+// });
+//
+// rockGeo.all().noisify(22, 0.03).computeNormalsCrossPlane().done();
+//
+// const mediumRock = new Mesh(rockGeo, materials.marble);
 
-  let scale = 1.0;
-  doTimes(verticalSegments + 1, index => {
-    const yPos = index * segmentSize;
-    largeTreeBase.selectBy(vertex => vertex.y === yPos)
-        .scale(scale, 1, scale);
-    if (index % 2 === 0) {
-      scale *= 0.7;
-    } else {
-      largeTreeBase.translate(noiseMaker.randomNumber(index + treeHeight), 0, noiseMaker.randomNumber(index + treeHeight));
-    }
-
-    if (index === verticalSegments) {
-      largeTreeBase.scale(0, 1.2, 0);
-    }
-  });
-  return largeTreeBase.done();
-}
-
-const treeBase = makeTree(16, 8, 2);
-const branch1 = makeTree(8, 4, 1);
-const branch2 = makeTree(6, 3, 0.7);
-branch1.all().rotate(0, 0, 1).translate(0, 5, -0.2).done();
-branch2.all().rotate(0.8, 0, -1).translate(0, 8, -0.2).done();
-
-treeBase.merge(branch1).merge(branch2).computeNormalsCrossPlane().done();
-const tree = new Mesh(treeBase, materials.wood);
-
-function makeLeaves(
-    fidelity: number,
-    radius: number,
-    noiseSeed: number,
-    translateX: number,
-    translateY: number,
-    translateZ: number,
-    scaleX = 1,
-    scaleY = 1,
-    scaleZ = 1,
-) {
-  return new MoldableCube(fidelity, fidelity, fidelity, fidelity, fidelity, fidelity)
-      .spherify(radius)
-      .translate(translateX, translateY, translateZ)
-      .scale(scaleX, scaleY, scaleZ)
-      .noisify(noiseSeed, 0.05)
-      .computeNormalsCrossPlane()
-      .done();
-}
-
-const leavesGeo1 = makeLeaves(3, 3, 2, -3, 8, -1, 2).done();
-const leavesGeo2 = makeLeaves(3, 3, 5, 2.5, 10, 3, 2, 1, 1.2).done();
-const leavesGeo3 = makeLeaves(3, 4, 7, 0, 9, 0, 2, 1.5, 1.2).done();
-
-const leaves1 = new Mesh(leavesGeo1, materials.treeLeaves);
-const leaves2 = new Mesh(leavesGeo2, materials.treeLeaves);
-const leaves3 = new Mesh(leavesGeo3, materials.treeLeaves);
-
-const object3d = new Object3d();
-object3d.add(tree, leaves1, leaves2, leaves3);
-object3d.scale.set(0.3, 0.3, 0.3);
+mediumRock.position.x += -8
+const object3d = new Object3d(mediumRock, smallRock, largeRock);
+object3d.scale.set(0.5, 0.5, 0.5);
 
 
 // arch
