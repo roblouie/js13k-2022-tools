@@ -94,9 +94,9 @@ export class Renderer {
     // Now render transparent items. For transparent items, stop writing to the depth mask. If we don't do this
     // the transparent portion of a transparent mesh will hide other transparent items. After rendering the
     // transparent items, set the depth mask back to writable.
-    // gl.depthMask(false);
-    // scene.transparentMeshes.forEach(renderMesh);
-    // gl.depthMask(true);
+    gl.depthMask(false);
+    scene.transparentMeshes.forEach(renderMesh);
+    gl.depthMask(true);
 
     // Unbinding the vertex array being used to make sure the last item drawn isn't still bound on the next draw call.
     // In theory this isn't necessary but avoids bugs.

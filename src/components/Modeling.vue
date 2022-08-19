@@ -155,9 +155,37 @@ branch2.all().rotate(0.8, 0, -1).translate(0, 8, -0.2).done();
 treeBase.merge(branch1).merge(branch2).computeNormalsCrossPlane().done();
 const tree = new Mesh(treeBase, materials.wood);
 
+function makeLeaves(
+    fidelity: number,
+    radius: number,
+    noiseSeed: number,
+    translateX: number,
+    translateY: number,
+    translateZ: number,
+    scaleX = 1,
+    scaleY = 1,
+    scaleZ = 1,
+) {
+  return new MoldableCube(fidelity, fidelity, fidelity, fidelity, fidelity, fidelity)
+      .spherify(radius)
+      .translate(translateX, translateY, translateZ)
+      .scale(scaleX, scaleY, scaleZ)
+      .noisify(noiseSeed, 0.05)
+      .computeNormalsCrossPlane()
+      .done();
+}
+
+const leavesGeo1 = makeLeaves(3, 3, 2, -3, 8, -1, 2).done();
+const leavesGeo2 = makeLeaves(3, 3, 5, 2.5, 10, 3, 2, 1, 1.2).done();
+const leavesGeo3 = makeLeaves(3, 4, 7, 0, 9, 0, 2, 1.5, 1.2).done();
+
+const leaves1 = new Mesh(leavesGeo1, materials.treeLeaves);
+const leaves2 = new Mesh(leavesGeo2, materials.treeLeaves);
+const leaves3 = new Mesh(leavesGeo3, materials.treeLeaves);
 
 const object3d = new Object3d();
-object3d.add(tree);
+object3d.add(tree, leaves1, leaves2, leaves3);
+object3d.scale.set(0.3, 0.3, 0.3);
 
 
 // arch
