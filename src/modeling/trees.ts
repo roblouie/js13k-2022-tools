@@ -8,7 +8,7 @@ import { CubeGeometry } from '@/engine/cube-geometry';
 
 const MoldableCube = MakeMoldable(CubeGeometry);
 
-function makeTree(treeHeight: number, verticalSegments: number, radius: number) {
+function makeTree(treeHeight: number, verticalSegments: number, radius: number, seed: number) {
   const segmentSize = treeHeight / verticalSegments;
   const largeTreeBase = new MoldableCube(3, treeHeight, 3, 4, verticalSegments, 4)
     .cylindrify(radius)
@@ -22,7 +22,7 @@ function makeTree(treeHeight: number, verticalSegments: number, radius: number) 
     if (index % 2 === 0) {
       scale *= 0.7;
     } else {
-      largeTreeBase.translate(noiseMaker.randomNumber(index + treeHeight), 0, noiseMaker.randomNumber(index + treeHeight));
+      largeTreeBase.translate(noiseMaker.randomNumber(index + treeHeight + seed), 0, noiseMaker.randomNumber(index + treeHeight + seed));
     }
 
     if (index === verticalSegments) {
@@ -53,14 +53,14 @@ function makeLeaves(
     .done();
 }
 
-const treeBase = makeTree(16, 8, 2);
-const branch1 = makeTree(8, 4, 1);
-const branch2 = makeTree(6, 3, 0.7);
+// Large Tree
+const treeBase = makeTree(16, 8, 2, 0);
+const branch1 = makeTree(8, 4, 1, 0);
+const branch2 = makeTree(6, 3, 0.7, 0);
 branch1.all().rotate(0, 0, 1).translate(0, 5, -0.2).done();
 branch2.all().rotate(0.8, 0, -1).translate(0, 8, -0.2).done();
 
 treeBase.merge(branch1).merge(branch2).computeNormalsCrossPlane().done();
-
 
 const leavesGeo1 = makeLeaves(3, 3, 2, -3, 8, -1, 2, 1, 1.7).done();
 const leavesGeo2 = makeLeaves(3, 3, 5, 2.5, 10, 3, 2, 1, 1.8).done();
@@ -72,3 +72,19 @@ const leaves3 = new Mesh(leavesGeo3, materials.treeLeaves);
 
 export const largeTree = new Mesh(treeBase, materials.wood);
 export const largeLeaves = new Object3d(leaves1, leaves2, leaves3);
+
+// Small Tree
+const smallTreeBase = makeTree(8, 4, 0.8, 5);
+const smallTreeBranch = makeTree(3, 2, 0.5, 7);
+smallTreeBranch.all().rotate(0, 0, 1).translate(0, 5, -0.2).done();
+smallTreeBase.merge(smallTreeBranch).computeNormalsCrossPlane().done();
+
+const smallLeavesGeo1 = makeLeaves(3, 2, 5, -2, 7, -1, 2, 1, 1.7).done();
+const smallLeaves1 = new Mesh(smallLeavesGeo1, materials.treeLeaves);
+
+const smallLeavesGeo2 = makeLeaves(3, 2, 5, 0.8, 6, 0.3, 1.4, 1.3, 2.1).done();
+const smallLeaves2 = new Mesh(smallLeavesGeo2, materials.treeLeaves);
+
+export const smallTree = new Mesh(smallTreeBase, materials.wood);
+export const smallLeaves = new Object3d(smallLeaves1, smallLeaves2);
+

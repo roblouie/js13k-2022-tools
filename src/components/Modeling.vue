@@ -72,7 +72,7 @@ import { createBox } from '@/modeling/building-blocks';
 import { truck } from '@/modeling/truck';
 import { doTimes } from '@/engine/helpers';
 import { noiseMaker } from '@/engine/texture-creation/noise-maker';
-import { largeLeaves, largeTree } from '@/modeling/trees';
+import { largeLeaves, largeTree, smallLeaves, smallTree } from '@/modeling/trees';
 import { largeRock, mediumRock, smallRock } from '@/modeling/rocks';
 
 const grid = ref<HTMLDivElement>(null);
@@ -138,8 +138,8 @@ const smallTreeBase = new MoldableCube(2, 4, 2, 4, 2, 4)
 //
 // const mediumRock = new Mesh(rockGeo, materials.marble);
 
-mediumRock.position.x += -8
-const object3d = new Object3d(mediumRock, smallRock, largeRock);
+mediumRock.position.x += -8;
+const object3d = new Object3d(smallTree, smallLeaves);
 object3d.scale.set(0.5, 0.5, 0.5);
 
 
