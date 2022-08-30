@@ -88,3 +88,17 @@ const smallLeaves2 = new Mesh(smallLeavesGeo2, materials.treeLeaves);
 export const smallTree = new Mesh(smallTreeBase, materials.wood);
 export const smallLeaves = new Object3d(smallLeaves1, smallLeaves2);
 
+// Plant 1
+function makePlantLeaves(leafScaleX: number, leafScaleY: number, leafScaleZ: number) {
+  return new MoldableCube(2, 2, 1, 2, 1)
+    .selectBy(vertex => vertex.y > 0 && vertex.x !== 0)
+    .scale(leafScaleX, leafScaleY, leafScaleZ)
+    .selectBy(vertex => vertex.y > 0 && vertex.x === 0)
+    .translate(0, -2, 0)
+    .done();
+}
+
+const bush1Geo = makePlantLeaves(3, 3, 0);
+bush1Geo.merge(makePlantLeaves(1, 3, 0).all().rotate(0, 0.8)).done();
+
+export const plant1 = new Mesh(bush1Geo, materials.treeLeaves);

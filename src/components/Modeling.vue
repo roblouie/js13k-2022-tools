@@ -60,20 +60,15 @@ import { Scene } from '@/engine/renderer/scene';
 import { Mesh } from '@/engine/renderer/mesh';
 import { CubeGeometry } from '@/engine/cube-geometry';
 import { materials } from '@/texture-maker';
-import { renderer } from '@/engine/renderer/renderer';
-import { BufferGeometry } from '@/engine/renderer/buffer-geometry';
+import { AttributeLocation, renderer } from '@/engine/renderer/renderer';
 import { onMounted, ref } from 'vue';
-import { gl, lilgl, renderCanvas } from '@/engine/renderer/lil-gl';
+import { gl, renderCanvas } from '@/engine/renderer/lil-gl';
 import { OrthoCamera } from '@/engine/renderer/ortho-camera';
-import { PlaneGeometry } from '@/engine/plane-geometry';
 import { MakeMoldable } from '@/engine/moldable';
 import { Object3d } from '@/engine/renderer/object-3d';
+import { Texture } from '@/engine/renderer/texture';
 import { createBox } from '@/modeling/building-blocks';
 import { truck } from '@/modeling/truck';
-import { doTimes } from '@/engine/helpers';
-import { noiseMaker } from '@/engine/texture-creation/noise-maker';
-import { largeLeaves, largeTree, smallLeaves, smallTree } from '@/modeling/trees';
-import { largeRock, mediumRock, smallRock } from '@/modeling/rocks';
 
 const grid = ref<HTMLDivElement>(null);
 const cameraCanvas = ref<HTMLCanvasElement>(null);
@@ -83,8 +78,8 @@ const sideCanvas = ref<HTMLCanvasElement>(null);
 
 const scene = new Scene();
 
-const camera = new Camera(Math.PI / 5, renderCanvas.width / renderCanvas.height, 1, 400);
-camera.position = new EnhancedDOMPoint(0, 0, 10);
+const camera = new Camera(Math.PI / 3, renderCanvas.width / renderCanvas.height, 1, 400);
+camera.position = new EnhancedDOMPoint(0, 0, 20);
 
 const topCamera = new OrthoCamera(-10, 10, -10, 10, 1, 400);
 topCamera.position = new EnhancedDOMPoint(0, 17, 0.001);
@@ -124,7 +119,19 @@ const smallTreeBase = new MoldableCube(2, 4, 2, 4, 2, 4)
     .translate(-3, 4, -2)
     .done();
 
-// const rockGeo = new MoldableCube(6, 3, 4, 2, 3, 2).spherify(3);
+function getTextureForSide(uDivisions: number, vDivisions: number, texture: Texture) {
+  return new Array((uDivisions + 1) * (vDivisions + 1)).fill().map(_ => texture.id);
+}
+
+//const testGeo = new MoldableCube(4, 4, 4, 1, 1, 1);
+//const textureDepths = getTextureForSide(1, 1, materials.bricks.texture);
+//console.log(textureDepths);
+// Height Segments
+// One height one depth needs 4,
+// Two height one depth needs 6
+
+// Two height two depth needs 9
+//testGeo.setAttribute(AttributeLocation.TextureDepth, new Float32Array([0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,  4, 4.5, 4.5, 6]), 1);
 // let scale = 4.0;
 // doTimes(20, index => {
 //   const yPos = index - 8;
@@ -136,11 +143,38 @@ const smallTreeBase = new MoldableCube(2, 4, 2, 4, 2, 4)
 //
 // rockGeo.all().noisify(22, 0.03).computeNormalsCrossPlane().done();
 //
-// const mediumRock = new Mesh(rockGeo, materials.marble);
 
-mediumRock.position.x += -8;
-const object3d = new Object3d(smallTree, smallLeaves);
-object3d.scale.set(0.5, 0.5, 0.5);
+
+
+// const head = createBox(6, 2, 1, 6, 1, 1)
+//   .selectBy(vertex => Math.abs(vertex.x) < 3 && Math.abs(vertex.z) < 3)
+//   .cylindrify(1)
+//     .invertSelection()
+//     .cylindrify(2)
+//     .computeNormalsPerPlane()
+//   .done();
+//
+// const headMesh = new Mesh(head, materials.bricks);
+
+truck.setRotation(0, 1.72, 0);
+const object3d = new Object3d(truck);
+
+
+// TODO: Body:
+// const head = new MoldableCube(1, 1, 1, 2, 2, 2).spherify(1).translate(0, 1, 0).computeNormalsCrossPlane().done();
+// const body = new MoldableCube(1, 2, 1, 2, 2, 2);
+// const legs = new MoldableCube(1, 2, 1, 2, 2, 2).translate(0, -1, 0).done();
+// const leftArm = new MoldableCube(0.5, 2, 0.5, 2, 2, 2).translate(0.75, -0.5, 0).rotate(-1.5).done();
+//
+// const headMesh = new Mesh(head, materials.marble);
+// const bodyMesh = new Mesh(body, materials.marble);
+// const legsMesh = new Mesh(legs, materials.marble);
+// const leftArmMesh = new Mesh(leftArm, materials.marble);
+//
+// const object3d = new Object3d(headMesh, bodyMesh, legsMesh, leftArmMesh);
+
+// END BODY
+// object3d.scale.set(0.5, 0.5, 0.5);
 
 
 // arch

@@ -2,6 +2,11 @@ import { EnhancedDOMPoint } from '@/engine/enhanced-dom-point';
 import { noiseMaker, NoiseType } from '@/engine/texture-creation/noise-maker';
 import { textureLoader } from '@/engine/renderer/texture-loader';
 import { Material } from '@/engine/renderer/material';
+import { Texture } from '@/engine/renderer/texture';
+
+export function getTextureForSide(uDivisions: number, vDivisions: number, texture: Texture) {
+  return new Array((uDivisions + 1) * (vDivisions + 1)).fill().map(_ => texture.id);
+}
 
 const [drawContext, tileContext, noiseContext] = ['draw', 'tile', 'noise'].map(id => {
   const canvas = document.createElement('canvas');
@@ -9,8 +14,8 @@ const [drawContext, tileContext, noiseContext] = ['draw', 'tile', 'noise'].map(i
   canvas.width = id === 'tile' ? 256 : 128;
   canvas.height = id === 'tile' ? 256 : 128;
   setTimeout(() => {
-    document.querySelector('div').appendChild(canvas);
-  }, 300);
+    document.querySelector('#canvas-parent').appendChild(canvas);
+  }, 400);
   return canvas.getContext('2d')!;
 });
 
@@ -153,6 +158,84 @@ function drawChassis() {
 }
 const chassis = new Material({color: '#00f'});
 
+// *********************
+// Paths
+// *********************
+export function drawPaths() {
+  clearWith('#933d00');
+  drawContext.globalCompositeOperation = 'overlay';
+  noiseMaker.seed(39);
+  noiseContext.putImageData(noiseMaker.noiseImage(128, 1 / 64, 2, NoiseType.Lines, '#141414', 200, true, 'x', 'y', 'z', 0), 0, 0);
+  drawContext.drawImage(noiseContext.canvas, 0, 0, resolution, resolution);
+  noisify(drawContext, 2);
+  return mainImageData();
+}
+const path = new Material({texture: textureLoader.load(drawRockWall())});
+
+// *********************
+// Dirt - Grass In Between
+// *********************
+export function dirtGrassInbetween() {
+  clearWith('#692f03');
+  noiseMaker.seed(12);
+  noiseContext.putImageData(noiseMaker.noiseImage(128, 1 / 32, 1, NoiseType.Perlin, '#0f0', 128), 0, 0);
+  drawContext.globalCompositeOperation = 'screen';
+  drawContext.drawImage(noiseContext.canvas, 0, 0, resolution, resolution);
+  drawContext.globalCompositeOperation = 'source-over';
+  return mainImageData();
+}
+const dirtGrassInBetween = new Material({texture: textureLoader.load(dirtGrassInbetween())});
+
+const truckColor = '#333';
+// *********************
+// Truck Cab Top
+// *********************
+export function drawTruckCabTop() {
+  clearWith(truckColor);
+  drawContext.fillStyle = 'black';
+  drawContext.fillRect(10, 55, 108, 20);
+  drawContext.textAlign = 'center';
+  drawContext.font = '35px sans-serif';
+  drawContext.fillText('💀', 64, 115);
+  return mainImageData();
+}
+const truckCabTop = new Material({texture: textureLoader.load(drawTruckCabTop())});
+
+// *********************
+// Truck Cab Front
+// *********************
+export function drawTruckCabFront() {
+  clearWith(truckColor);
+  drawContext.fillStyle = 'black';
+  drawContext.textAlign = 'center';
+  drawContext.font = '35px sans-serif';
+  drawContext.save();
+  drawContext.scale(0.6, 1);
+  drawContext.fillText('⚪', 32, 105);
+  drawContext.fillText('⚪', 180, 105);
+  drawContext.restore();
+  return mainImageData();
+}
+const truckCabFront = new Material({texture: textureLoader.load(drawTruckCabFront())});
+
+// *********************
+// Truck Cab Side
+// *********************
+export function drawTruckCabSide() {
+  clearWith(truckColor);
+  clearWith(truckColor);
+  drawContext.fillStyle = 'black';
+  drawContext.beginPath();
+  drawContext.moveTo(20, 105);
+  drawContext.lineTo(40, 105);
+  drawContext.lineTo(40, 80);
+  drawContext.lineTo(20, 80);
+  drawContext.closePath();
+  drawContext.fill();
+  return mainImageData();
+}
+const truckCabSide = new Material({texture: textureLoader.load(drawTruckCabSide())});
+
 
 textureLoader.bindTextures();
 
@@ -168,6 +251,9 @@ export const materials = {
   tire,
   wheel,
   chassis,
+  truckCabTop,
+  truckCabFront,
+  truckCabSide,
 };
 
 // export const skyboxes = {

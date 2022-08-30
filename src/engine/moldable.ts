@@ -4,13 +4,30 @@ import { CubeGeometry } from '@/engine/cube-geometry';
 import { AttributeLocation } from '@/engine/renderer/renderer';
 import { PlaneGeometry } from '@/engine/plane-geometry';
 import { noiseMaker } from '@/engine/texture-creation/noise-maker';
+import { Texture } from '@/engine/renderer/texture';
+import { materials } from '@/texture-maker';
 
 type GConstructor<T = {}> = new (...args: any[]) => T;
 type CanBeMoldable = GConstructor<CubeGeometry & PlaneGeometry>;
 
+function getTextureForSide(uDivisions: number, vDivisions: number, texture: Texture) {
+  return new Array((uDivisions + 1) * (vDivisions + 1)).fill().map(_ => texture.id);
+}
+
 export function MakeMoldable<TBase extends CanBeMoldable>(Base: TBase) {
   return class Moldable extends Base {
     verticesToActOn: EnhancedDOMPoint[] = [];
+
+    static TexturePerSide(widthDivisions: number, heightDivisions: number, depthDivisions: number,
+      left: Texture, right: Texture, top: Texture, bottom: Texture, back: Texture, front: Texture) {
+      const leftTexture = getTextureForSide(depthDivisions, heightDivisions, left);
+      const rightTexture = getTextureForSide(depthDivisions, heightDivisions, right);
+      const topTexture = getTextureForSide(widthDivisions, depthDivisions, top);
+      const bottomTexture = getTextureForSide(widthDivisions, depthDivisions, bottom);
+      const backTexture = getTextureForSide(widthDivisions, heightDivisions, back);
+      const frontTexture = getTextureForSide(widthDivisions, heightDivisions, front);
+      return [...leftTexture, ...rightTexture, ...topTexture, ...bottomTexture, ...backTexture, ...frontTexture];
+    }
 
     constructor(...args: any[]) {
       super(...args);
