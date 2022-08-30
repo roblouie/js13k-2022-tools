@@ -156,7 +156,7 @@ function getTextureForSide(uDivisions: number, vDivisions: number, texture: Text
 //
 // const headMesh = new Mesh(head, materials.bricks);
 
-truck.setRotation(0, 1.72, 0);
+// truck.setRotation(0, -Math.PI / 2, 0);
 const object3d = new Object3d(truck);
 
 

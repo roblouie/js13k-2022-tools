@@ -64,16 +64,16 @@ function createWheelPair() {
 
 
 function createChassis() {
-  const texturesPerSide = MoldableCube.TexturePerSide(3, 4, 5,
-    materials.truckCabSide.texture!,
-    materials.lake.texture!,
+  const texturesPerSide = MoldableCube.TexturePerSide(3, 3, 5,
+    materials.truckCabRightSide.texture!,
+    materials.truckCabLeftSide.texture!,
     materials.truckCabTop.texture!,
     materials.tiles.texture!,
     materials.wood.texture!,
     materials.truckCabFront.texture!,
   );
 
-  const cab = new MoldableCube(8, 3, 9, 3, 4, 5)
+  const cab = new MoldableCube(8, 3, 9, 3, 3, 5)
     .selectBy(vertex => vertex.y > 1 && (vertex.z < 3 && vertex.z > 0))
     .translate(0, 2, 1.8)
     .selectBy(vertex => vertex.y > 1 && (vertex.z < 3 && vertex.z > 0))
@@ -82,25 +82,32 @@ function createChassis() {
     .done();
 
   cab.setAttribute(AttributeLocation.TextureDepth, new Float32Array(texturesPerSide), 1);
-  cab.bindGeometry();
+
+  const cabSideWindows = new MoldableCube(8.1, 1.6, 2.4)
+    .selectBy(vertex => vertex.z < 0 && vertex.y < 0)
+    .translate(0, 0, -2)
+    .all()
+    .translate(0, 2.3, 2.9)
+    .done();
 
   const bedFloor = new MoldableCube(6, 1.5, 6).translate(0, -0.8, 8).done();
 
-  const bed = createBox(8, 3, 0.8, 6, 2, 1)
-    .rotate(0, Math.PI / 2)
-    .translate(0, 0, 8)
-    .computeNormalsPerPlane()
-    .done();
+  // const bed = createBox(8, 3, 0.8, 6, 2, 1)
+  //   .rotate(0, Math.PI / 2)
+  //   .translate(0, 0, 8)
+  //   .computeNormalsPerPlane()
+  //   .done();
 
   // const chassisGeometry = cab.merge(bed)
   //   .computeNormalsPerPlane()
   //   .done();
 
+  const cabSideWindowMesh = new Mesh(cabSideWindows, new Material({ color: '#000' }));
   const cabMesh = new Mesh(cab, new Material({ color: '#fff' }));
   const bedFloorMesh = new Mesh(bedFloor, materials.chassis);
-  const bedMesh = new Mesh(bed, materials.chassis);
+  // const bedMesh = new Mesh(bed, materials.chassis);
 
-  const chassis = new Object3d(cabMesh, bedFloorMesh, bedMesh);
+  const chassis = new Object3d(cabMesh, cabSideWindowMesh, bedFloorMesh);
   chassis.position.y += 2;
   chassis.position.z += 3;
   chassis.scale.z = 0.9;

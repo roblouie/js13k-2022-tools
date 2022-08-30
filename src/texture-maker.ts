@@ -3,6 +3,7 @@ import { noiseMaker, NoiseType } from '@/engine/texture-creation/noise-maker';
 import { textureLoader } from '@/engine/renderer/texture-loader';
 import { Material } from '@/engine/renderer/material';
 import { Texture } from '@/engine/renderer/texture';
+import { doTimes } from '@/engine/helpers';
 
 export function getTextureForSide(uDivisions: number, vDivisions: number, texture: Texture) {
   return new Array((uDivisions + 1) * (vDivisions + 1)).fill().map(_ => texture.id);
@@ -214,6 +215,10 @@ export function drawTruckCabFront() {
   drawContext.fillText('⚪', 32, 105);
   drawContext.fillText('⚪', 180, 105);
   drawContext.restore();
+
+  doTimes(5, index => {
+    drawContext.fillRect(42 + index * 10, 10, 5, 60);
+  });
   return mainImageData();
 }
 const truckCabFront = new Material({texture: textureLoader.load(drawTruckCabFront())});
@@ -221,21 +226,20 @@ const truckCabFront = new Material({texture: textureLoader.load(drawTruckCabFron
 // *********************
 // Truck Cab Side
 // *********************
-export function drawTruckCabSide() {
+export function drawTruckCabSide(isRight: boolean) {
   clearWith(truckColor);
-  clearWith(truckColor);
-  drawContext.fillStyle = 'black';
-  drawContext.beginPath();
-  drawContext.moveTo(20, 105);
-  drawContext.lineTo(40, 105);
-  drawContext.lineTo(40, 80);
-  drawContext.lineTo(20, 80);
-  drawContext.closePath();
-  drawContext.fill();
+  drawContext.textAlign = 'center';
+  drawContext.font = '45px sans-serif';
+  drawContext.save();
+  drawContext.scale(0.6, -1);
+  drawContext.fillText('🦴', isRight ? 52 : 152, -40);
+  drawContext.scale(-1, 1);
+  drawContext.fillText('🦴', isRight ? -52 : -152, -40);
+  drawContext.restore();
   return mainImageData();
 }
-const truckCabSide = new Material({texture: textureLoader.load(drawTruckCabSide())});
-
+const truckCabRightSide = new Material({texture: textureLoader.load(drawTruckCabSide(true))});
+const truckCabLeftSide = new Material({texture: textureLoader.load(drawTruckCabSide(false))});
 
 textureLoader.bindTextures();
 
@@ -253,7 +257,8 @@ export const materials = {
   chassis,
   truckCabTop,
   truckCabFront,
-  truckCabSide,
+  truckCabRightSide,
+  truckCabLeftSide,
 };
 
 // export const skyboxes = {
